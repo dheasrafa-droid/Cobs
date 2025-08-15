@@ -1,171 +1,433 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DSRT Full Active Prototype</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DSRT – Prototype 64 Fitur</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.0.0/fabric.min.js"></script>
 <style>
   body { scroll-behavior: smooth; }
-  #tab-content { max-height: 400px; overflow-y: auto; }
-  canvas { border: 1px solid #ccc; }
   .tabs-container { overflow-x: auto; white-space: nowrap; }
   .tab { display: inline-block; cursor: pointer; padding: 0.5rem 1rem; font-weight: 600; }
   .tab.active { border-bottom: 2px solid #3b82f6; color: #1d4ed8; }
+  .panel { border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 0.75rem; background: #ffffff; }
+  .panel h4 { font-weight: 600; margin-bottom: 0.5rem; }
+  .panel .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  canvas { border: 1px solid #e5e7eb; background: #ffffff; }
 </style>
 </head>
 <body class="bg-gray-100 p-4">
 
-<div class="max-w-7xl mx-auto p-4 bg-white rounded shadow">
+<div class="max-w-7xl mx-auto p-4 bg-white rounded-2xl shadow">
+  <!-- Header / Utilities -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+    <div class="text-xl font-bold">DSRT – Prototype 64 Fitur</div>
+    <div class="flex gap-2 flex-wrap">
+      <label class="panel row !p-2">
+        <span class="text-sm">Upload Gambar</span>
+        <input id="uploader" type="file" accept="image/*" class="text-sm" />
+      </label>
+      <button id="add-bg" class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm">Background Checker</button>
+      <button id="reset-canvas" class="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-sm">Reset</button>
+      <button id="delete-selected" class="px-3 py-1 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm">Delete Selected</button>
+    </div>
+  </div>
 
   <!-- Tabs -->
-  <div class="tabs-container mb-4" id="tabs"></div>
+  <div class="tabs-container mb-3" id="tabs"></div>
 
-  <!-- Canvas -->
-  <div class="mb-4 border rounded shadow p-2 flex justify-center items-center h-80 bg-gray-200 relative">
-    <canvas id="canvas" class="w-full h-auto bg-white"></canvas>
+  <!-- Canvas Area -->
+  <div class="mb-4 border rounded-2xl shadow p-2 flex justify-center items-center bg-gray-50 relative">
+    <canvas id="canvas"></canvas>
   </div>
 
   <!-- Tab content -->
-  <div id="tab-content" class="bg-gray-50 p-4 rounded shadow space-y-3"></div>
+  <div id="tab-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
 
   <!-- Download buttons -->
-  <div class="mt-4 flex gap-2">
-    <button id="download-small" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Download Small</button>
-    <button id="download-medium" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Download Medium</button>
-    <button id="download-large" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Download Large</button>
+  <div class="mt-4 flex gap-2 flex-wrap">
+    <button data-dl="400x300" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm">Download 400×300</button>
+    <button data-dl="800x600" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm">Download 800×600</button>
+    <button data-dl="1200x900" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm">Download 1200×900</button>
   </div>
-
 </div>
 
 <script>
-// ------------------- Feature Definition -------------------
+// ========= Fabric Canvas =========
+const canvasEl = document.getElementById('canvas');
+const canvas = new fabric.Canvas(canvasEl, { backgroundColor: '#fff', selection: true });
+function resizeCanvas() {
+  const maxW = Math.min(1000, document.body.clientWidth - 64);
+  const w = Math.max(320, Math.floor(maxW));
+  const h = Math.floor(w * 9 / 16);
+  canvas.setWidth(w);
+  canvas.setHeight(h);
+  canvas.renderAll();
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// checkerboard bg toggle
+let checkerOn = false;
+function setChecker(on) {
+  checkerOn = on;
+  if (!on) { canvas.setBackgroundColor('#fff', canvas.renderAll.bind(canvas)); return; }
+  const size = 20;
+  const patternCanvas = document.createElement('canvas');
+  patternCanvas.width = patternCanvas.height = size*2;
+  const pctx = patternCanvas.getContext('2d');
+  pctx.fillStyle = '#f3f4f6'; pctx.fillRect(0,0,patternCanvas.width,patternCanvas.height);
+  pctx.fillStyle = '#e5e7eb';
+  pctx.fillRect(0,0,size,size);
+  pctx.fillRect(size,size,size,size);
+  const pattern = new fabric.Pattern({ source: patternCanvas, repeat: 'repeat' });
+  canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
+}
+
+document.getElementById('add-bg').addEventListener('click',()=> setChecker(!checkerOn));
+
+document.getElementById('reset-canvas').addEventListener('click',()=>{
+  canvas.clear();
+  canvas.setBackgroundColor('#fff', canvas.renderAll.bind(canvas));
+});
+
+document.getElementById('delete-selected').addEventListener('click',()=>{
+  const obj = canvas.getActiveObject();
+  if (obj) canvas.remove(obj);
+});
+
+// Upload image
+const uploader = document.getElementById('uploader');
+uploader.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  fabric.Image.fromURL(url, img => {
+    img.set({ left: 40, top: 40, selectable: true });
+    const scale = Math.min((canvas.width-80)/img.width, (canvas.height-80)/img.height, 1);
+    if (scale < 1) img.scale(scale);
+    canvas.add(img).setActiveObject(img).renderAll();
+  });
+});
+
+// ========= Helpers =========
+function getActive() {
+  const obj = canvas.getActiveObject();
+  if (!obj) { alert('Pilih objek terlebih dahulu.'); }
+  return obj;
+}
+
+function applyImageFilters(img) {
+  if (!img || img.type !== 'image') return;
+  img.applyFilters();
+  canvas.renderAll();
+}
+
+function ensureFilter(img, FilterClass) {
+  if (!img || img.type !== 'image') return null;
+  img.filters = img.filters || [];
+  let f = img.filters.find(fl => fl && fl.type === FilterClass.type);
+  if (!f) { f = new FilterClass(); img.filters.push(f); }
+  return f;
+}
+
+const F = fabric.Image.filters;
+
+// small UI builders
+function panel(title){
+  const wrap = document.createElement('div'); wrap.className='panel';
+  const h4 = document.createElement('h4'); h4.textContent = title; wrap.appendChild(h4);
+  return wrap;
+}
+function row(el){ const r=document.createElement('div'); r.className='row'; el.appendChild(r); return r; }
+function btn(el,label,fn){ const b=document.createElement('button'); b.className='px-3 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white text-sm'; b.textContent=label; b.onclick=fn; el.appendChild(b); return b; }
+function slider(el,label,min,max,step,on,getInit){
+  const r=row(el);
+  const lab=document.createElement('label'); lab.textContent=label; lab.className='text-sm min-w-24';
+  const s=document.createElement('input'); s.type='range'; s.min=min; s.max=max; s.step=step; s.value=getInit?getInit(): (min+max)/2;
+  const out=document.createElement('span'); out.className='text-xs text-gray-600'; out.textContent=s.value;
+  s.oninput=(e)=>{ out.textContent=e.target.value; on(parseFloat(e.target.value)); };
+  r.append(lab,s,out); return s;
+}
+function inputNumber(el,label,min,max,val,on){
+  const r=row(el);
+  const lab=document.createElement('label'); lab.textContent=label; lab.className='text-sm min-w-24';
+  const i=document.createElement('input'); i.type='number'; i.className='border rounded px-2 py-1 text-sm w-24';
+  i.min=min; i.max=max; i.value=val; i.oninput=(e)=>on(parseFloat(e.target.value)); r.append(lab,i); return i;
+}
+function toggle(el,label,def,on){ const r=row(el); const lab=document.createElement('label'); lab.textContent=label; lab.className='text-sm'; const i=document.createElement('input'); i.type='checkbox'; i.checked=def; i.onchange=()=>on(i.checked); r.append(i,lab); return i; }
+function dropdown(el,label,opts){ const r=row(el); const lab=document.createElement('label'); lab.textContent=label; lab.className='text-sm min-w-24'; const s=document.createElement('select'); s.className='border rounded px-2 py-1 text-sm'; opts.forEach(o=>{ const op=document.createElement('option'); op.value=o.v; op.textContent=o.l; s.appendChild(op); }); r.append(lab,s); return s; }
+function color(el,label,def){ const r=row(el); const lab=document.createElement('label'); lab.textContent=label; lab.className='text-sm min-w-24'; const i=document.createElement('input'); i.type='color'; i.value=def||'#000000'; r.append(lab,i); return i; }
+function note(el,text){ const r=row(el); const p=document.createElement('div'); p.className='text-xs text-gray-500'; p.textContent=text; r.appendChild(p); return p; }
+
+function hexToRgba(hex, a=1){ const m=hex.replace('#',''); const bigint=parseInt(m,16); const r=(bigint>>16)&255, g=(bigint>>8)&255, b=bigint&255; return `rgba(${r},${g},${b},${a})`; }
+
+// overlays & patterns
+let overlayRect = null;
+function setOverlayRect(opacity){
+  if (!overlayRect){
+    overlayRect = new fabric.Rect({ left:0, top:0, width:canvas.width, height:canvas.height, fill:'#000', opacity:opacity, selectable:false, evented:false });
+    canvas.add(overlayRect); canvas.sendToBack(overlayRect);
+  } else { overlayRect.set({ width:canvas.width, height:canvas.height, opacity }); }
+  canvas.renderAll();
+}
+function overlayGradient(c1,c2,op){
+  setOverlayRect(op);
+  overlayRect.set({ fill: new fabric.Gradient({ type:'linear', gradientUnits:'pixels', coords:{x1:0,y1:0,x2:canvas.width,y2:canvas.height}, colorStops:[{offset:0,color:c1},{offset:1,color:c2}] }) });
+  canvas.renderAll();
+}
+function applyGradientToActive(){
+  const o=getActive(); if(!o) return;
+  o.set('fill', new fabric.Gradient({ type:'linear', gradientUnits:'pixels', coords:{x1:0,y1:0,x2:o.width||200,y2:o.height||200}, colorStops:[{offset:0,color:'#34d399'},{offset:1,color:'#3b82f6'}] }));
+  canvas.renderAll();
+}
+// Pattern brushes
+function setPatternBrush(mode){
+  if (mode==='solid'){ canvas.freeDrawingBrush = new fabric.PencilBrush(canvas); return; }
+  const brush = new fabric.PatternBrush(canvas);
+  brush.getPatternSrc = function() {
+    const s = 16; const pc = document.createElement('canvas'); pc.width=pc.height=s; const ctx = pc.getContext('2d');
+    ctx.clearRect(0,0,s,s);
+    if (mode==='dots') { ctx.beginPath(); ctx.arc(s/2,s/2,3,0,Math.PI*2); ctx.fillStyle='#000'; ctx.fill(); }
+    if (mode==='diag') { ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,s); ctx.lineTo(s,0); ctx.stroke(); }
+    return pc;
+  };
+  canvas.freeDrawingBrush = brush;
+}
+
+// Crop helpers
+function applyCropFromActive(){
+  const rect = canvas.getActiveObject();
+  if (!rect || rect.type!=='rect') { alert('Pilih area crop (Rect).'); return; }
+  const dataURL = canvas.toDataURL({ left: rect.left, top: rect.top, width: rect.width * rect.scaleX, height: rect.height * rect.scaleY });
+  fabric.Image.fromURL(dataURL, img=>{ canvas.clear(); canvas.add(img).setActiveObject(img).renderAll(); });
+}
+
+// Selection helpers
+let currentSelection = null;
+function makeSelection(kind){
+  if (currentSelection) { canvas.remove(currentSelection); currentSelection=null; }
+  if (kind==='rect') currentSelection = new fabric.Rect({ left:40, top:40, width:200, height:120, fill:'rgba(59,130,246,0.15)', stroke:'#3b82f6', strokeDashArray:[6,6], selectable:true });
+  if (kind==='ellipse') currentSelection = new fabric.Ellipse({ left:60, top:60, rx:120, ry:80, fill:'rgba(16,185,129,0.15)', stroke:'#10b981', strokeDashArray:[6,6], selectable:true });
+  if (currentSelection){ currentSelection.setControlsVisibility({ mtr:false }); canvas.add(currentSelection).setActiveObject(currentSelection); }
+}
+function startLasso(){ alert('Placeholder: Lasso manual belum diimplementasi.'); }
+function startPolygon(){
+  if (currentSelection) { canvas.remove(currentSelection); currentSelection=null; }
+  currentSelection = new fabric.Polygon([{x:100,y:80},{x:220,y:120},{x:180,y:200},{x:80,y:180}], { fill:'rgba(234,179,8,0.15)', stroke:'#eab308', strokeDashArray:[6,6], objectCaching:false });
+  canvas.add(currentSelection).setActiveObject(currentSelection);
+}
+function applyClipFromSelection(){
+  const sel = currentSelection; if(!sel){ alert('Tidak ada seleksi.'); return; }
+  const target = canvas.getObjects().find(o=>o.type==='image');
+  if (!target) { alert('Tidak ada image untuk di-clip.'); return; }
+  sel.clone(clone=>{ clone.set({ absolutePositioned: true }); target.clipPath = clone; canvas.remove(sel); currentSelection=null; canvas.renderAll(); });
+}
+
+// Blend helpers
+function blendBlock(el, mode){
+  note(el, `Blend mode ke objek aktif: ${mode}`);
+  slider(el,'Opacity',0,1,0.01,(v)=>{ const o=getActive(); if(o){ o.opacity = parseFloat(v); canvas.renderAll(); } });
+  btn(el,'Set Blend Mode',()=>{ const o=getActive(); if(o){ o.globalCompositeOperation = mode; canvas.renderAll(); } });
+}
+
+// ========= Feature Model (64 items) =========
+let brushColorPicker = null;
 const featureBlocks = [
-  { title: "Transform & Rotate", items: ["Rotate 90°","Rotate 180°","Rotate 270°","Free Rotate","Arbitrary Rotate","Warp Rotate","Move / Resize","Free Transform","Skew / Distort","Warp Mesh"].map(n=>({name:n,action:'rotate'})) },
-  { title: "Crop", items: ["Fixed Aspect Ratio","Free Crop","Crop + Straighten","Perspective / Multi-layer Crop"].map(n=>({name:n,action:'crop'})) },
-  { title: "Brush / Pen / Pencil", items: ["Basic Brush","Size Control","Opacity Control","Pressure / Flow / Tilt","Custom Brush Engine","Dynamic Brush / Texture / Angle"].map(n=>({name:n,action:'brush'}) )},
-  { title: "Color Adjustment", items: ["Brightness","Contrast","Hue","Saturation","Curves","Levels","Color Balance","Gradient Map","Manual Color Grading"].map(n=>({name:n,action:'color'}) )},
-  { title: "Selection Tools", items: ["Rectangular Selection","Elliptical Selection","Lasso Selection","Polygonal Lasso","Refine Edge","Channel Selection","Mask Selection"].map(n=>({name:n,action:'select'}) )},
-  { title: "Retouch / Healing / Clone", items: ["Eraser","Clone Stamp","Healing Brush","Patch Tool","Advanced Clone","Frequency Separation","High-end Retouch"].map(n=>({name:n,action:'retouch'}) )},
-  { title: "Compositing / Layer Effects", items: ["Simple Overlay","Blending Multiply","Blending Screen","Blending Overlay","Adjustment Layers","Gradient Fill","Full Compositing"].map(n=>({name:n,action:'layer'}) )},
-  { title: "Text / Typography", items: ["Add Text","Font Style","Font Size","Text Align","Warp Text","Text on Path","Gradient Fill Text","Advanced Typography"].map(n=>({name:n,action:'text'}) )},
-  { title: "Vector / Shape Tools", items: ["Rectangle","Ellipse","Polygon","Node Edit","Pen Tool","Advanced Vector Edit"].map(n=>({name:n,action:'shape'}) )}
+  {
+    title: 'Transform & Rotate',
+    items: [
+      { name: 'Rotate 90°', render(el){ btn(el,'Rotate 90°',()=>{ const o=getActive(); if(o){ o.rotate(((o.angle||0)+90)%360); o.setCoords(); canvas.renderAll(); } }); } },
+      { name: 'Rotate 180°', render(el){ btn(el,'Rotate 180°',()=>{ const o=getActive(); if(o){ o.rotate(((o.angle||0)+180)%360); o.setCoords(); canvas.renderAll(); } }); } },
+      { name: 'Rotate 270°', render(el){ btn(el,'Rotate 270°',()=>{ const o=getActive(); if(o){ o.rotate(((o.angle||0)+270)%360); o.setCoords(); canvas.renderAll(); } }); } },
+      { name: 'Free Rotate', render(el){ slider(el,'Sudut',0,360,1,(v)=>{ const o=getActive(); if(o){ o.rotate(v); o.setCoords(); canvas.renderAll(); } }); } },
+      { name: 'Arbitrary Rotate', render(el){ inputNumber(el,'Derajat',-720,720,0,(v)=>{ const o=getActive(); if(o){ o.rotate(v); o.setCoords(); canvas.renderAll(); } }); } },
+      { name: 'Move / Resize', render(el){
+          slider(el,'Pos X',-1000,1000,1,(v)=>{ const o=getActive(); if(o){ o.left=v; o.setCoords(); canvas.renderAll(); } },()=>{ const o=canvas.getActiveObject(); return o?o.left:0; });
+          slider(el,'Pos Y',-1000,1000,1,(v)=>{ const o=getActive(); if(o){ o.top=v; o.setCoords(); canvas.renderAll(); } },()=>{ const o=canvas.getActiveObject(); return o?o.top:0; });
+          slider(el,'Scale X',0.1,5,0.01,(v)=>{ const o=getActive(); if(o){ o.scaleX=v; o.setCoords(); canvas.renderAll(); } },()=>{ const o=canvas.getActiveObject(); return o?o.scaleX:1; });
+          slider(el,'Scale Y',0.1,5,0.01,(v)=>{ const o=getActive(); if(o){ o.scaleY=v; o.setCoords(); canvas.renderAll(); } },()=>{ const o=canvas.getActiveObject(); return o?o.scaleY:1; });
+        } },
+      { name: 'Free Transform', render(el){ toggle(el,'Enable Controls', true, (on)=>{ canvas.selection = on; const o = canvas.getActiveObject(); if(o){ o.hasControls = on; o.lockScalingFlip = !on; o.setCoords(); } canvas.renderAll(); }); } },
+      { name: 'Skew / Distort', render(el){
+          slider(el,'Skew X',-60,60,1,(v)=>{ const o=getActive(); if(o){ o.skewX=v; o.setCoords(); canvas.renderAll(); } });
+          slider(el,'Skew Y',-60,60,1,(v)=>{ const o=getActive(); if(o){ o.skewY=v; o.setCoords(); canvas.renderAll(); } });
+        } },
+      { name: 'Warp Rotate', render(el){ note(el,'Placeholder: rotasi warping membutuhkan mesh.'); } },
+      { name: 'Warp Mesh', render(el){ note(el,'Placeholder: mesh warp belum diimplementasi.'); } },
+    ]
+  },
+  {
+    title: 'Crop',
+    items: [
+      { name: 'Fixed Aspect Ratio', render(el){
+          const select = dropdown(el,'Rasio',[{v:'1:1',l:'1:1'},{v:'4:3',l:'4:3'},{v:'16:9',l:'16:9'}]);
+          btn(el,'Buat Area',()=>{
+            const [w,h] = (select.value||'1:1').split(':').map(Number);
+            const cw = Math.min(canvas.width*0.8, 400); const ch = cw*h/w;
+            const rect = new fabric.Rect({ left: (canvas.width-cw)/2, top:(canvas.height-ch)/2, width:cw, height:ch, fill:'rgba(59,130,246,0.1)', stroke:'#3b82f6', strokeDashArray:[6,6], selectable:true });
+            rect.setControlsVisibility({ mtr:false }); canvas.add(rect).setActiveObject(rect);
+          });
+          btn(el,'Crop Apply',()=> applyCropFromActive());
+        } },
+      { name: 'Free Crop', render(el){
+          btn(el,'Area Bebas',()=>{
+            const rect = new fabric.Rect({ left: 40, top:40, width: Math.min(300, canvas.width-80), height: Math.min(200, canvas.height-80), fill:'rgba(16,185,129,0.1)', stroke:'#10b981', strokeDashArray:[6,6] });
+            rect.setControlsVisibility({ mtr:false }); canvas.add(rect).setActiveObject(rect);
+          });
+          btn(el,'Crop Apply',()=> applyCropFromActive());
+        } },
+      { name: 'Crop + Straighten', render(el){
+          slider(el,'Sudut',-15,15,0.1,(v)=>{ const o=getActive(); if(o){ o.rotate(v); o.setCoords(); canvas.renderAll(); } });
+          btn(el,'Crop Apply',()=> applyCropFromActive());
+        } },
+      { name: 'Perspective / Multi-layer Crop', render(el){ note(el,'Placeholder: perspective crop belum didukung.'); } },
+    ]
+  },
+  {
+    title: 'Brush / Pen / Pencil',
+    items: [
+      { name: 'Basic Brush', render(el){ toggle(el,'Drawing Mode', false, (on)=>{ canvas.isDrawingMode = on; }); } },
+      { name: 'Size Control', render(el){ slider(el,'Brush Size',1,80,1,(v)=>{ canvas.freeDrawingBrush.width = v; }); } },
+      { name: 'Opacity Control', render(el){
+          const cp = color(el,'Color','#000000'); brushColorPicker = cp;
+          slider(el,'Opacity',0.05,1,0.01,(v)=>{ canvas.freeDrawingBrush.color = hexToRgba(cp.value, v); });
+        } },
+      { name: 'Pressure / Flow / Tilt', render(el){ slider(el,'Flow',0.05,1,0.01,()=>{}); note(el,'Placeholder: dukung pointer pressure jika tersedia.'); } },
+      { name: 'Custom Brush Engine', render(el){ btn(el,'Pattern Dots',()=> setPatternBrush('dots')); btn(el,'Pattern Diagonal',()=> setPatternBrush('diag')); btn(el,'Solid',()=> setPatternBrush('solid')); } },
+      { name: 'Dynamic Brush / Texture / Angle', render(el){ note(el,'Placeholder: tekstur & jitter angle.'); } },
+    ]
+  },
+  {
+    title: 'Color Adjustment',
+    items: [
+      { name: 'Brightness', render(el){ slider(el,'Brightness',-1,1,0.01,(v)=>{ const img=getActive(); const f = ensureFilter(img, F.Brightness); if(f){ f.brightness = v; applyImageFilters(img); } }); } },
+      { name: 'Contrast', render(el){ slider(el,'Contrast',-1,1,0.01,(v)=>{ const img=getActive(); const f = ensureFilter(img, F.Contrast); if(f){ f.contrast = v; applyImageFilters(img); } }); } },
+      { name: 'Hue', render(el){ slider(el,'Hue',0,360,1,(v)=>{ const img=getActive(); const f = ensureFilter(img, F.HueRotation); if(f){ f.rotation = v * Math.PI/180; applyImageFilters(img); } }); } },
+      { name: 'Saturation', render(el){ slider(el,'Saturation',-1,1,0.01,(v)=>{ const img=getActive(); const f = ensureFilter(img, F.Saturation); if(f){ f.saturation = v; applyImageFilters(img); } }); } },
+      { name: 'Curves', render(el){ note(el,'Placeholder: Curves belum diimplementasi.'); } },
+      { name: 'Levels', render(el){ note(el,'Placeholder: Levels belum diimplementasi.'); } },
+      { name: 'Color Balance', render(el){ note(el,'Placeholder: Color Balance belum diimplementasi.'); } },
+      { name: 'Gradient Map', render(el){
+          const c1 = color(el,'Warna 1','#000000');
+          const c2 = color(el,'Warna 2','#ffffff');
+          slider(el,'Opacity',0,1,0.01,(op)=>{ overlayGradient(c1.value,c2.value,op); });
+          btn(el,'Apply Overlay',()=> overlayGradient(c1.value,c2.value,0.5));
+        } },
+      { name: 'Manual Color Grading', render(el){ note(el,'Placeholder: kontrol Shadows/Mids/Highlights.'); } },
+    ]
+  },
+  {
+    title: 'Selection Tools',
+    items: [
+      { name: 'Rectangular Selection', render(el){ btn(el,'Buat Seleksi',()=> makeSelection('rect')); btn(el,'Apply Clip',()=> applyClipFromSelection()); } },
+      { name: 'Elliptical Selection', render(el){ btn(el,'Buat Seleksi',()=> makeSelection('ellipse')); btn(el,'Apply Clip',()=> applyClipFromSelection()); } },
+      { name: 'Lasso Selection', render(el){ btn(el,'Gambar Lasso',()=> startLasso()); btn(el,'Apply Clip',()=> applyClipFromSelection()); } },
+      { name: 'Polygonal Lasso', render(el){ btn(el,'Buat Polygon',()=> startPolygon()); btn(el,'Apply Clip',()=> applyClipFromSelection()); } },
+      { name: 'Refine Edge', render(el){ note(el,'Placeholder: feather/expand edge.'); } },
+      { name: 'Channel Selection', render(el){ note(el,'Placeholder: channel-based selection.'); } },
+      { name: 'Mask Selection', render(el){ note(el,'Placeholder: masking pixel.'); } },
+    ]
+  },
+  {
+    title: 'Retouch / Healing / Clone',
+    items: [
+      { name: 'Eraser', render(el){ toggle(el,'Erase Mode (white)', false, (on)=>{
+            if (on) {
+              canvas.isDrawingMode = true;
+              canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+              canvas.freeDrawingBrush.width = 20;
+              canvas.freeDrawingBrush.color = '#ffffff';
+            } else { canvas.isDrawingMode = false; }
+          }); } },
+      { name: 'Clone Stamp', render(el){ btn(el,'Duplicate Active',()=>{ const o=getActive(); if(o){ o.clone(cloned=>{ cloned.set({ left:(o.left||0)+20, top:(o.top||0)+20 }); canvas.add(cloned).setActiveObject(cloned).renderAll(); }); } }); } },
+      { name: 'Healing Brush', render(el){ note(el,'Placeholder: membutuhkan operasi pixel.'); } },
+      { name: 'Patch Tool', render(el){ note(el,'Placeholder: patch seleksi ke area lain.'); } },
+      { name: 'Advanced Clone', render(el){ note(el,'Placeholder: offset clone & blend.'); } },
+      { name: 'Frequency Separation', render(el){ note(el,'Placeholder: low/high frequency.'); } },
+      { name: 'High-end Retouch', render(el){ note(el,'Placeholder: suite retouch pro.'); } },
+    ]
+  },
+  {
+    title: 'Compositing / Layer Effects',
+    items: [
+      { name: 'Simple Overlay', render(el){
+          slider(el,'Opacity',0,1,0.01,(v)=>{ setOverlayRect(v); });
+          btn(el,'Tambah Overlay',()=> setOverlayRect(0.3));
+        } },
+      { name: 'Blending Multiply', render(el){ blendBlock(el,'multiply'); } },
+      { name: 'Blending Screen', render(el){ blendBlock(el,'screen'); } },
+      { name: 'Blending Overlay', render(el){ blendBlock(el,'overlay'); } },
+      { name: 'Adjustment Layers', render(el){ note(el,'Placeholder: adjustment layer stack.'); } },
+      { name: 'Gradient Fill', render(el){ btn(el,'Apply pada Objek',()=> applyGradientToActive()); } },
+      { name: 'Full Compositing', render(el){ note(el,'Placeholder: multi-layer + masks.'); } },
+    ]
+  },
+  {
+    title: 'Text / Typography',
+    items: [
+      { name: 'Add Text', render(el){ btn(el,'Tambah Text',()=>{ const t = new fabric.Textbox('DSRT Text',{ left:50, top:50, width:180, fontSize:24, fill:'#111' }); canvas.add(t).setActiveObject(t).renderAll(); }); } },
+      { name: 'Font Style', render(el){ const s = dropdown(el,'Font',[{v:'Arial',l:'Arial'},{v:'Georgia',l:'Georgia'},{v:'Courier New',l:'Courier New'}]); btn(el,'Apply',()=>{ const o=getActive(); if(o && o.isEditing!==undefined){ o.fontFamily = s.value; canvas.renderAll(); } }); } },
+      { name: 'Font Size', render(el){ slider(el,'Size',8,120,1,(v)=>{ const o=getActive(); if(o && o.isEditing!==undefined){ o.fontSize = v; canvas.renderAll(); } }); } },
+      { name: 'Text Align', render(el){ const s = dropdown(el,'Align',[{v:'left',l:'Left'},{v:'center',l:'Center'},{v:'right',l:'Right'}]); btn(el,'Apply',()=>{ const o=getActive(); if(o && o.isEditing!==undefined){ o.textAlign = s.value; canvas.renderAll(); } }); } },
+      { name: 'Warp Text', render(el){ note(el,'Placeholder: text warp (arc/flag).'); } },
+      { name: 'Text on Path', render(el){ note(el,'Placeholder: text mengikuti path.'); } },
+      { name: 'Gradient Fill Text', render(el){ btn(el,'Apply Gradient',()=> applyGradientToActive()); } },
+      { name: 'Advanced Typography', render(el){ note(el,'Placeholder: kerning/leading/ligatures.'); } },
+    ]
+  },
+  {
+    title: 'Vector / Shape Tools',
+    items: [
+      { name: 'Rectangle', render(el){ btn(el,'Tambah',()=>{ const r=new fabric.Rect({ left:60, top:60, width:120, height:80, fill:'rgba(59,130,246,0.25)', stroke:'#3b82f6' }); canvas.add(r).setActiveObject(r).renderAll(); }); } },
+      { name: 'Ellipse', render(el){ btn(el,'Tambah',()=>{ const e=new fabric.Ellipse({ left:80, top:80, rx:70, ry:45, fill:'rgba(16,185,129,0.25)', stroke:'#10b981' }); canvas.add(e).setActiveObject(e).renderAll(); }); } },
+      { name: 'Polygon', render(el){ btn(el,'Tambah',()=>{ const p=new fabric.Polygon([{x:0,y:0},{x:100,y:30},{x:60,y:100}],{ left:120, top:90, fill:'rgba(234,179,8,0.25)', stroke:'#eab308' }); canvas.add(p).setActiveObject(p).renderAll(); }); } },
+      { name: 'Node Edit', render(el){ note(el,'Placeholder: edit titik node.'); } },
+      { name: 'Pen Tool', render(el){ note(el,'Placeholder: path pen tool.'); } },
+      { name: 'Advanced Vector Edit', render(el){ note(el,'Placeholder: boolean ops & pathfinder.'); } },
+    ]
+  }
 ];
 
+// ========= Tabs & Render =========
 let activeTab = 0;
-
-// ------------------- Fabric.js Canvas -------------------
-const canvasEl = document.getElementById('canvas');
-const canvas = new fabric.Canvas(canvasEl,{backgroundColor:'#fff',selection:true});
-canvas.setWidth(800);
-canvas.setHeight(400);
-
-// ------------------- Tabs -------------------
 const tabsContainer = document.getElementById('tabs');
-featureBlocks.forEach((f,i)=>{
-  const btn = document.createElement('div');
-  btn.className = 'tab' + (i===0?' active':'');
-  btn.dataset.index=i;
-  btn.textContent=f.title;
-  tabsContainer.appendChild(btn);
-});
+const content = document.getElementById('tab-content');
 
-// ------------------- Render Tab Content -------------------
+function renderTabs(){
+  tabsContainer.innerHTML = '';
+  featureBlocks.forEach((f,i)=>{
+    const btn = document.createElement('div');
+    btn.className = 'tab' + (i===activeTab ? ' active' : '');
+    btn.textContent = f.title;
+    btn.onclick = ()=>{ activeTab=i; renderTabs(); renderTabContent(); };
+    tabsContainer.appendChild(btn);
+  });
+}
 function renderTabContent(){
-  const container = document.getElementById('tab-content');
-  container.innerHTML = '';
+  content.innerHTML = '';
   featureBlocks[activeTab].items.forEach(item=>{
-    const div = document.createElement('div');
-    div.className="flex justify-between items-center";
-    const btn = document.createElement('button');
-    btn.className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600";
-    btn.textContent="Jalankan";
-    btn.addEventListener('click',()=>runFeature(item.action));
-    div.innerHTML = `<div><p class="font-medium">${item.name}</p></div>`;
-    div.appendChild(btn);
-    container.appendChild(div);
+    const p = panel(item.name);
+    // body of panel is p
+    item.render(p);
+    content.appendChild(p);
   });
 }
 
-// ------------------- Feature Actions -------------------
-function runFeature(action){
-  const obj = canvas.getActiveObject();
-  switch(action){
-    case 'rotate':
-      if(obj) obj.rotate((obj.angle||0)+45);
-      else alert("Select object first");
-      canvas.renderAll();
-      break;
-    case 'crop':
-      const rect = new fabric.Rect({left:50,top:50,width:300,height:200});
-      canvas.setActiveObject(rect);
-      const dataURL = canvas.toDataURL({left:rect.left, top:rect.top, width:rect.width, height:rect.height});
-      fabric.Image.fromURL(dataURL,img=>{
-        canvas.clear();
-        canvas.add(img);
-      });
-      break;
-    case 'brush':
-      canvas.isDrawingMode = !canvas.isDrawingMode;
-      canvas.freeDrawingBrush.width = 5;
-      canvas.freeDrawingBrush.color = "#000";
-      alert("Brush tool toggled. Draw on canvas.");
-      break;
-    case 'color':
-      if(obj && obj.type==='image'){
-        obj.filters.push(new fabric.Image.filters.Brightness({brightness:0.1}));
-        obj.applyFilters();
-        canvas.renderAll();
-      } else alert("Select image for color adjustment");
-      break;
-    case 'retouch':
-      alert("Pixel-level retouch active. Use object select and clone/erase.");
-      break;
-    case 'layer':
-      if(obj) obj.set({opacity:0.7});
-      canvas.renderAll();
-      break;
-    case 'text':
-      const text = new fabric.Textbox("DSRT Text",{left:50,top:50,width:150,fontSize:20,fill:'#000'});
-      canvas.add(text); break;
-    case 'shape':
-      const rectShape = new fabric.Rect({left:50,top:50,width:100,height:60,fill:'rgba(0,0,255,0.3)'}); 
-      canvas.add(rectShape); break;
-    case 'select':
-      alert("Selection mask applied"); break;
-    default:
-      alert(action+" executed");
-  }
-}
+renderTabs();
+renderTabContent();
 
-// ------------------- Tab Click -------------------
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    activeTab=parseInt(tab.dataset.index);
-    renderTabContent();
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
+// ========= Downloads =========
+document.querySelectorAll('[data-dl]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const [w,h] = b.getAttribute('data-dl').split('x').map(Number);
+    const temp = document.createElement('canvas'); temp.width=w; temp.height=h;
+    const ctx = temp.getContext('2d');
+    ctx.drawImage(canvasEl,0,0,w,h);
+    const link=document.createElement('a'); link.download=`DSRT_${w}x${h}.png`; link.href=temp.toDataURL('image/png'); link.click();
   });
 });
-
-// ------------------- Download -------------------
-function downloadCanvas(width,height){
-  const temp = document.createElement('canvas');
-  temp.width = width; temp.height = height;
-  const tCtx = temp.getContext('2d');
-  tCtx.drawImage(canvasEl,0,0,width,height);
-  const link=document.createElement('a');
-  link.download=`DSRT_${width}x${height}.png`;
-  link.href=temp.toDataURL('image/png');
-  link.click();
-}
-document.getElementById('download-small').addEventListener('click',()=>downloadCanvas(400,300));
-document.getElementById('download-medium').addEventListener('click',()=>downloadCanvas(800,600));
-document.getElementById('download-large').addEventListener('click',()=>downloadCanvas(1200,900));
-
-// ------------------- Initial Render -------------------
-renderTabContent();
 </script>
 
 </body>
