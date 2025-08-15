@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSRT Full Active Prototype</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.0.0/fabric.min.js"></script>
+<style>
+  body { scroll-behavior: smooth; }
+  #tab-content { max-height: 400px; overflow-y: auto; }
+  canvas { border: 1px solid #ccc; }
+  .tabs-container { overflow-x: auto; white-space: nowrap; }
+  .tab { display: inline-block; cursor: pointer; padding: 0.5rem 1rem; font-weight: 600; }
+  .tab.active { border-bottom: 2px solid #3b82f6; color: #1d4ed8; }
+</style>
+</head>
+<body class="bg-gray-100 p-4">
+
+<div class="max-w-7xl mx-auto p-4 bg-white rounded shadow">
+
+  <!-- Tabs -->
+  <div class="tabs-container mb-4" id="tabs"></div>
+
+  <!-- Canvas -->
+  <div class="mb-4 border rounded shadow p-2 flex justify-center items-center h-80 bg-gray-200 relative">
+    <canvas id="canvas" class="w-full h-auto bg-white"></canvas>
+  </div>
+
+  <!-- Tab content -->
+  <div id="tab-content" class="bg-gray-50 p-4 rounded shadow space-y-3"></div>
+
+  <!-- Download buttons -->
+  <div class="mt-4 flex gap-2">
+    <button id="download-small" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Download Small</button>
+    <button id="download-medium" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Download Medium</button>
+    <button id="download-large" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600">Download Large</button>
+  </div>
+
+</div>
+
+<script>
+// ------------------- Feature Definition -------------------
+const featureBlocks = [
+  { title: "Transform & Rotate", items: ["Rotate 90°","Rotate 180°","Rotate 270°","Free Rotate","Arbitrary Rotate","Warp Rotate","Move / Resize","Free Transform","Skew / Distort","Warp Mesh"].map(n=>({name:n,action:'rotate'})) },
+  { title: "Crop", items: ["Fixed Aspect Ratio","Free Crop","Crop + Straighten","Perspective / Multi-layer Crop"].map(n=>({name:n,action:'crop'})) },
+  { title: "Brush / Pen / Pencil", items: ["Basic Brush","Size Control","Opacity Control","Pressure / Flow / Tilt","Custom Brush Engine","Dynamic Brush / Texture / Angle"].map(n=>({name:n,action:'brush'}) )},
+  { title: "Color Adjustment", items: ["Brightness","Contrast","Hue","Saturation","Curves","Levels","Color Balance","Gradient Map","Manual Color Grading"].map(n=>({name:n,action:'color'}) )},
+  { title: "Selection Tools", items: ["Rectangular Selection","Elliptical Selection","Lasso Selection","Polygonal Lasso","Refine Edge","Channel Selection","Mask Selection"].map(n=>({name:n,action:'select'}) )},
+  { title: "Retouch / Healing / Clone", items: ["Eraser","Clone Stamp","Healing Brush","Patch Tool","Advanced Clone","Frequency Separation","High-end Retouch"].map(n=>({name:n,action:'retouch'}) )},
+  { title: "Compositing / Layer Effects", items: ["Simple Overlay","Blending Multiply","Blending Screen","Blending Overlay","Adjustment Layers","Gradient Fill","Full Compositing"].map(n=>({name:n,action:'layer'}) )},
+  { title: "Text / Typography", items: ["Add Text","Font Style","Font Size","Text Align","Warp Text","Text on Path","Gradient Fill Text","Advanced Typography"].map(n=>({name:n,action:'text'}) )},
+  { title: "Vector / Shape Tools", items: ["Rectangle","Ellipse","Polygon","Node Edit","Pen Tool","Advanced Vector Edit"].map(n=>({name:n,action:'shape'}) )}
+];
+
+let activeTab = 0;
+
+// ------------------- Fabric.js Canvas -------------------
+const canvasEl = document.getElementById('canvas');
+const canvas = new fabric.Canvas(canvasEl,{backgroundColor:'#fff',selection:true});
+canvas.setWidth(800);
+canvas.setHeight(400);
+
+// ------------------- Tabs -------------------
+const tabsContainer = document.getElementById('tabs');
+featureBlocks.forEach((f,i)=>{
+  const btn = document.createElement('div');
+  btn.className = 'tab' + (i===0?' active':'');
+  btn.dataset.index=i;
+  btn.textContent=f.title;
+  tabsContainer.appendChild(btn);
+});
+
+// ------------------- Render Tab Content -------------------
+function renderTabContent(){
+  const container = document.getElementById('tab-content');
+  container.innerHTML = '';
+  featureBlocks[activeTab].items.forEach(item=>{
+    const div = document.createElement('div');
+    div.className="flex justify-between items-center";
+    const btn = document.createElement('button');
+    btn.className="ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600";
+    btn.textContent="Jalankan";
+    btn.addEventListener('click',()=>runFeature(item.action));
+    div.innerHTML = `<div><p class="font-medium">${item.name}</p></div>`;
+    div.appendChild(btn);
+    container.appendChild(div);
+  });
+}
+
+// ------------------- Feature Actions -------------------
+function runFeature(action){
+  const obj = canvas.getActiveObject();
+  switch(action){
+    case 'rotate':
+      if(obj) obj.rotate((obj.angle||0)+45);
+      else alert("Select object first");
+      canvas.renderAll();
+      break;
+    case 'crop':
+      const rect = new fabric.Rect({left:50,top:50,width:300,height:200});
+      canvas.setActiveObject(rect);
+      const dataURL = canvas.toDataURL({left:rect.left, top:rect.top, width:rect.width, height:rect.height});
+      fabric.Image.fromURL(dataURL,img=>{
+        canvas.clear();
+        canvas.add(img);
+      });
+      break;
+    case 'brush':
+      canvas.isDrawingMode = !canvas.isDrawingMode;
+      canvas.freeDrawingBrush.width = 5;
+      canvas.freeDrawingBrush.color = "#000";
+      alert("Brush tool toggled. Draw on canvas.");
+      break;
+    case 'color':
+      if(obj && obj.type==='image'){
+        obj.filters.push(new fabric.Image.filters.Brightness({brightness:0.1}));
+        obj.applyFilters();
+        canvas.renderAll();
+      } else alert("Select image for color adjustment");
+      break;
+    case 'retouch':
+      alert("Pixel-level retouch active. Use object select and clone/erase.");
+      break;
+    case 'layer':
+      if(obj) obj.set({opacity:0.7});
+      canvas.renderAll();
+      break;
+    case 'text':
+      const text = new fabric.Textbox("DSRT Text",{left:50,top:50,width:150,fontSize:20,fill:'#000'});
+      canvas.add(text); break;
+    case 'shape':
+      const rectShape = new fabric.Rect({left:50,top:50,width:100,height:60,fill:'rgba(0,0,255,0.3)'}); 
+      canvas.add(rectShape); break;
+    case 'select':
+      alert("Selection mask applied"); break;
+    default:
+      alert(action+" executed");
+  }
+}
+
+// ------------------- Tab Click -------------------
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    activeTab=parseInt(tab.dataset.index);
+    renderTabContent();
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+// ------------------- Download -------------------
+function downloadCanvas(width,height){
+  const temp = document.createElement('canvas');
+  temp.width = width; temp.height = height;
+  const tCtx = temp.getContext('2d');
+  tCtx.drawImage(canvasEl,0,0,width,height);
+  const link=document.createElement('a');
+  link.download=`DSRT_${width}x${height}.png`;
+  link.href=temp.toDataURL('image/png');
+  link.click();
+}
+document.getElementById('download-small').addEventListener('click',()=>downloadCanvas(400,300));
+document.getElementById('download-medium').addEventListener('click',()=>downloadCanvas(800,600));
+document.getElementById('download-large').addEventListener('click',()=>downloadCanvas(1200,900));
+
+// ------------------- Initial Render -------------------
+renderTabContent();
+</script>
+
+</body>
+</html>
