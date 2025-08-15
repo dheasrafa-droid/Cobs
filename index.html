@@ -1,91 +1,74 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="DSRT - AI Gambar, Editing, dan Restorasi" />
-    <meta name="keywords" content="DSRT, AI, edit gambar, restorasi, premium" />
-    <title>DSRT - AI Gambar & Restorasi</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DSRT - Digital Smart Revise Technology</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-[#0d0d2b] text-white font-sans">
 
-    <!-- Header -->
-    <header class="bg-white shadow fixed w-full z-50">
-        <div class="container mx-auto flex justify-between items-center p-4">
-            <h1 class="text-2xl font-bold text-indigo-600">DSRT</h1>
-            <nav class="space-x-6">
-                <a href="#features" class="hover:text-indigo-600">Fitur</a>
-                <a href="#pricing" class="hover:text-indigo-600">Harga</a>
-                <a href="login.html" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Login</a>
-            </nav>
+  <!-- Navbar -->
+  <header class="flex justify-between items-center px-6 py-4 border-b border-gray-700">
+    <h1 class="text-2xl font-bold tracking-wide">DSRT</h1>
+    <a href="login.html" class="px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition">Login</a>
+  </header>
+
+  <!-- Hero -->
+  <section class="text-center py-16 px-4 bg-[url('https://www.transparenttextures.com/patterns/asfalt-light.png')]">
+    <h2 class="text-5xl font-extrabold mb-4">DSRT</h2>
+    <p class="text-lg text-gray-300 mb-8">Digital Smart Revise Technology</p>
+    <a href="dashboard.html" class="px-6 py-3 bg-orange-500 rounded-lg text-lg font-semibold hover:bg-orange-600 transition">Mulai Sekarang</a>
+  </section>
+
+  <!-- Tentang DSRT -->
+  <section class="py-12 px-6 max-w-3xl mx-auto text-center">
+    <h3 class="text-2xl font-bold mb-4">Tentang DSRT</h3>
+    <p class="text-gray-300">
+      Platform inovatif untuk digital smart retouching dan revisi gambar dengan teknologi modern 
+      yang cepat dan presisi.
+    </p>
+  </section>
+
+  <!-- Fitur Unggulan -->
+  <section class="py-8 px-4 max-w-3xl mx-auto">
+    <h3 class="text-2xl font-bold text-center mb-8">Fitur Unggulan</h3>
+    <div class="space-y-4">
+      <div class="flex items-center p-4 bg-white/10 rounded-lg">
+        <span class="text-3xl mr-4">📷</span>
+        <div>
+          <h4 class="font-semibold">Smart Retouch</h4>
+          <p class="text-gray-300 text-sm">Menghapus objek tak diinginkan hanya dengan sekali klik</p>
         </div>
-    </header>
-
-    <!-- Hero -->
-    <section class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white pt-24 pb-32">
-        <div class="container mx-auto text-center">
-            <h2 class="text-4xl md:text-5xl font-bold mb-4">Ubah Gambar Jadi Luar Biasa</h2>
-            <p class="text-lg mb-6">Restorasi, pewarnaan, dan editing AI dengan kualitas tinggi, untuk semua kebutuhan Anda.</p>
-            <a href="register.html" class="bg-white text-indigo-600 px-6 py-3 rounded-full font-semibold shadow hover:bg-gray-100">Mulai Gratis</a>
+      </div>
+      <div class="flex items-center p-4 bg-white/10 rounded-lg">
+        <span class="text-3xl mr-4">🎨</span>
+        <div>
+          <h4 class="font-semibold">Color Enhance</h4>
+          <p class="text-gray-300 text-sm">Tingkatkan warna foto agar lebih hidup dan natural</p>
         </div>
-    </section>
-
-    <!-- Features -->
-    <section id="features" class="py-16 bg-gray-100">
-        <div class="container mx-auto text-center">
-            <h3 class="text-3xl font-bold mb-10">Fitur Unggulan</h3>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg">
-                    <h4 class="text-xl font-semibold mb-3">Restorasi Foto</h4>
-                    <p>Pulihkan foto lama menjadi jernih dan penuh warna.</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg">
-                    <h4 class="text-xl font-semibold mb-3">Pewarnaan AI</h4>
-                    <p>Ubah foto hitam putih menjadi berwarna secara otomatis.</p>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg">
-                    <h4 class="text-xl font-semibold mb-3">Mode Premium</h4>
-                    <p>Gunakan resolusi tinggi dan fitur eksklusif untuk hasil maksimal.</p>
-                </div>
-            </div>
+      </div>
+      <div class="flex items-center p-4 bg-white/10 rounded-lg">
+        <span class="text-3xl mr-4">🖼️</span>
+        <div>
+          <h4 class="font-semibold">Background Cut</h4>
+          <p class="text-gray-300 text-sm">Potong dan ganti background foto dengan cepat</p>
         </div>
-    </section>
-
-    <!-- Pricing -->
-    <section id="pricing" class="py-16">
-        <div class="container mx-auto text-center">
-            <h3 class="text-3xl font-bold mb-10">Paket Harga</h3>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h4 class="text-xl font-semibold mb-2">Gratis</h4>
-                    <p class="text-gray-600 mb-4">Untuk penggunaan dasar</p>
-                    <p class="text-2xl font-bold mb-4">Rp 0</p>
-                    <ul class="mb-6 text-gray-700">
-                        <li>• 5 proses per hari</li>
-                        <li>• Mode Light</li>
-                    </ul>
-                    <a href="register.html" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Daftar</a>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow border-2 border-indigo-600">
-                    <h4 class="text-xl font-semibold mb-2">Premium</h4>
-                    <p class="text-gray-600 mb-4">Untuk hasil profesional</p>
-                    <p class="text-2xl font-bold mb-4">Rp 50.000 / bulan</p>
-                    <ul class="mb-6 text-gray-700">
-                        <li>• Unlimited proses</li>
-                        <li>• Semua mode termasuk HD</li>
-                    </ul>
-                    <a href="register.html" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Upgrade</a>
-                </div>
-            </div>
+      </div>
+      <div class="flex items-center p-4 bg-white/10 rounded-lg">
+        <span class="text-3xl mr-4">✏️</span>
+        <div>
+          <h4 class="font-semibold">Manual Revise</h4>
+          <p class="text-gray-300 text-sm">Edit detail foto secara manual untuk hasil sempurna</p>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6 text-center">
-        <p>&copy; 2025 DSRT. Semua Hak Dilindungi.</p>
-    </footer>
+  <!-- Footer -->
+  <footer class="py-6 text-center border-t border-gray-700 text-gray-400 text-sm">
+    &copy; 2025 DSRT. Semua Hak Dilindungi.
+  </footer>
 
 </body>
 </html>
