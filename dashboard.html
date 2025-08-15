@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DSRT — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0b0f1a;--card:#111827;--muted:#9aa3b2;--brand:#7c5cff;--accent:#22d3ee;--text:#e6eaf2}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#0b0f1a 0%,#0b1224 100%);color:var(--text)}
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+    .layout{display:grid;grid-template-columns:260px 1fr;gap:18px}
+    .sidebar{position:sticky;top:0;height:100vh;padding:18px;border-right:1px solid #1a2238;background:rgba(255,255,255,.02)}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;margin-bottom:16px}
+    .brand .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--accent))}
+    .nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:var(--muted)}
+    .nav a.active,.nav a:hover{background:#151c31;color:var(--text)}
+    .topbar{display:flex;justify-content:space-between;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--accent));color:#0a0f1a;font-weight:700;border:none;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid #24304a;color:var(--text)}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}
+    .card{background:rgba(255,255,255,.02);border:1px solid #1a2238;border-radius:16px;padding:16px}
+    .muted{color:var(--muted)}
+    .grid-2{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{padding:10px;border-bottom:1px solid #1a2238;text-align:left}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid #22304a;color:#c9d2e0;font-size:12px}
+    @media (max-width: 1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}.cards{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
+    canvas{width:100%;height:240px;display:block}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand"><span class="dot"></span>DSRT</div>
+      <nav class="nav">
+        <a href="#overview" class="active">📊 Overview</a>
+        <a href="#uploads">🖼️ Upload</a>
+        <a href="#limits">⏳ Limit Harian</a>
+        <a href="#users">👥 Users</a>
+        <a href="#settings">⚙️ Pengaturan</a>
+      </nav>
+      <div style="margin-top:24px">
+        <button class="btn" id="upgradeBtn">Upgrade Premium</button>
+      </div>
+    </aside>
+
+    <main class="container">
+      <div class="topbar">
+        <h1 style="margin:0">Dashboard</h1>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="pill" id="rolePill">Role: Free</span>
+          <button class="btn ghost" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
+      <section id="overview" class="cards">
+        <div class="card">
+          <div class="muted">Pemakaian Hari Ini</div>
+          <h2 id="usageToday" style="margin:.3rem 0">0 / 10</h2>
+          <small class="muted">Reset tiap 00:00</small>
+        </div>
+        <div class="card">
+          <div class="muted">Status Akun</div>
+          <h2 id="accountStatus" style="margin:.3rem 0">Aktif</h2>
+          <small class="muted">Tidak diblokir</small>
+        </div>
+        <div class="card">
+          <div class="muted">Premium Hingga</div>
+          <h2 id="premiumUntil" style="margin:.3rem 0">-</h2>
+          <small class="muted">Klik Upgrade untuk aktivasi</small>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Grafik Pemakaian (7 hari)</h3>
+            <span class="pill">Mock</span>
+          </div>
+          <canvas id="usageChart" width="640" height="240"></canvas>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 8px">Aktivitas Terakhir</h3>
+          <table class="table" id="activityTable">
+            <thead>
+              <tr><th>Waktu</th><th>Aksi</th><th>Mode</th><th>Status</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="uploads" style="margin-top:16px">
+        <h3 style="margin:0 0 8px">Upload Gambar</h3>
+        <form id="uploadForm">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input type="file" id="fileInput" accept="image/*" required />
+            <select id="mode">
+              <option value="light">light (free)</option>
+              <option value="hd">hd (premium)</option>
+              <option value="colorize">colorize (premium)</option>
+              <option value="kerusakan_berat">kerusakan_berat (free 1x)</option>
+            </select>
+            <button class="btn" type="submit">Proses</button>
+          </div>
+        </form>
+        <div id="preview" style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+      </section>
+
+      <section class="card" id="limits" style="margin-top:16px">
+        <h3 style="margin:0 0 8px">Limit Harian</h3>
+        <p class="muted">Free: 10/hari, kerusakan_berat: 1/hari, Premium: 100/hari. (Mock logic front-end)</p>
+        <div id="limitInfo" class="pill">Tersisa: <b id="remaining">10</b></div>
+      </section>
+
+      <section class="card" id="users" style="margin-top:16px">
+        <h3 style="margin:0 0 8px">Manajemen User (Mock)</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost" onclick="mockBlock()">Block User</button>
+          <button class="btn ghost" onclick="mockUnblock()">Unblock User</button>
+          <button class="btn ghost" onclick="mockUpgrade()">Set Premium</button>
+        </div>
+        <p class="muted">Endpoint backend bisa dihubungkan ke tombol-tombol di atas (FastAPI/Node). </p>
+      </section>
+
+      <section class="card" id="settings" style="margin-top:16px">
+        <h3 style="margin:0 0 8px">Pengaturan</h3>
+        <label class="muted">Tema: </label>
+        <select id="themeSwitcher">
+          <option value="dark" selected>Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ===== Mock State =====
+    const state = {
+      role: 'free',
+      blocked: false,
+      premiumUntil: null,
+      usageToday: 0,
+      limitFree: 10,
+      limitPremium: 100,
+      usedKerusakanBerat: 0
+    };
+
+    // ===== Topbar bindings =====
+    function refreshTop(){
+      document.getElementById('usageToday').textContent = `${state.usageToday} / ${state.role==='premium'?state.limitPremium:state.limitFree}`;
+      document.getElementById('accountStatus').textContent = state.blocked ? 'Diblokir' : 'Aktif';
+      document.getElementById('premiumUntil').textContent = state.premiumUntil ? new Date(state.premiumUntil).toLocaleString() : '-';
+      document.getElementById('rolePill').textContent = `Role: ${state.role==='premium'?'Premium':'Free'}`;
+      document.getElementById('remaining').textContent = (state.role==='premium'?state.limitPremium:state.limitFree) - state.usageToday;
+    }
+
+    // ===== Chart (Vanilla canvas) =====
+    const ctx = document.getElementById('usageChart').getContext('2d');
+    const chartData = Array.from({length:7},()=>Math.floor(Math.random()*6)+1);
+    function drawChart(){
+      const w = ctx.canvas.width, h = ctx.canvas.height;
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = '#0f1530'; ctx.fillRect(0,0,w,h);
+      // grid
+      ctx.strokeStyle = '#1f2a4a'; ctx.lineWidth = 1;
+      for(let i=0;i<=5;i++){const y = 20 + i*(h-40)/5; ctx.beginPath(); ctx.moveTo(32,y); ctx.lineTo(w-16,y); ctx.stroke();}
+      // bars
+      const pad = 40, bw = (w - pad*2) / chartData.length - 12;
+      chartData.forEach((v,i)=>{
+        const x = pad + i*(bw+12);
+        const barH = (v/10)*(h-60);
+        const y = h-20 - barH;
+        const grad = ctx.createLinearGradient(0,y,0,y+barH);
+        grad.addColorStop(0,'#7c5cff'); grad.addColorStop(1,'#22d3ee');
+        ctx.fillStyle = grad; ctx.fillRect(x,y,bw,barH);
+      });
+      // axes
+      ctx.fillStyle = '#9aa3b2'; ctx.font = '12px Inter';
+      'SMTWTFS'.split('').forEach((d,i)=>{const x = pad + i*(bw+12)+bw/2; ctx.textAlign='center'; ctx.fillText(d,x,h-4)});
+    }
+
+    // ===== Activity table (mock) =====
+    const tbody = document.querySelector('#activityTable tbody');
+    function pushActivity(action, mode, status='ok'){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${new Date().toLocaleString()}</td><td>${action}</td><td>${mode||'-'}</td><td>${status}</td>`;
+      tbody.prepend(tr);
+    }
+
+    // ===== Upload mock =====
+    document.getElementById('uploadForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      if(state.blocked){alert('Akun diblokir.');return}
+      const mode = document.getElementById('mode').value;
+      if(state.role==='free' && ['hd','colorize'].includes(mode)){
+        alert('Mode premium. Silakan upgrade.');
+        pushActivity('upload denied', mode, 'denied');
+        return;
+      }
+      if(mode==='kerusakan_berat' && state.usedKerusakanBerat>=1 && state.role==='free'){
+        alert('Limit kerusakan_berat 1x/hari untuk free.');
+        pushActivity('limit exceeded', mode, 'denied');
+        return;
+      }
+      const file = document.getElementById('fileInput').files[0];
+      if(!file){alert('Pilih file.');return}
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        const preview = document.getElementById('preview');
+        preview.innerHTML = `<img src="${reader.result}" style="width:100%;border:1px solid #1a2238;border-radius:12px"/>`+
+          `<div style="display:grid;place-items:center;border:1px dashed #1a2238;border-radius:12px;min-height:220px">`+
+          `<div class='muted'>[Hasil proses: ${mode}] (mock)</div></div>`;
+      };
+      reader.readAsDataURL(file);
+      if(mode==='kerusakan_berat' && state.role==='free') state.usedKerusakanBerat++;
+      state.usageToday++;
+      refreshTop(); drawChart();
+      pushActivity('upload', mode, 'ok');
+    });
+
+    // ===== Users mock actions =====
+    function mockBlock(){ state.blocked = true; refreshTop(); pushActivity('block user'); }
+    function mockUnblock(){ state.blocked = false; refreshTop(); pushActivity('unblock user'); }
+    function mockUpgrade(){ state.role = 'premium'; state.premiumUntil = Date.now()+7*24*3600*1000; refreshTop(); pushActivity('upgrade user'); }
+
+    // ===== Theme switcher =====
+    document.getElementById('themeSwitcher').addEventListener('change',(e)=>{
+      if(e.target.value==='light'){
+        document.documentElement.style.setProperty('--bg','#f4f6fb');
+        document.body.style.background = '#f4f6fb';
+        document.documentElement.style.setProperty('--text','#0b1224');
+      } else { location.reload(); }
+    });
+
+    // ===== Upgrade button =====
+    document.getElementById('upgradeBtn').addEventListener('click',()=>{
+      alert('Integrasikan ke endpoint: POST /admin/upgrade/:userId (JWT protected).');
+    });
+
+    // ===== Logout (placeholder) =====
+    function logout(){ alert('Implementasikan: hapus token dari storage lalu redirect ke /index.html'); }
+
+    // init
+    refreshTop(); drawChart(); pushActivity('login');
+  </script>
+</body>
+</html>
