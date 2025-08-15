@@ -1,0 +1,109 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DSRT — Prototype/Canvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0b0f1a;--card:#111827;--muted:#9aa3b2;--brand:#7c5cff;--accent:#22d3ee;--text:#e6eaf2}
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family:Inter,system-ui,Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#0b0f1a 0%,#0b1224 100%);color:var(--text)}
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+    .card{background:rgba(255,255,255,.02);border:1px solid #1a2238;border-radius:16px;padding:16px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--accent));color:#0a0f1a;font-weight:700;border:none;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid #24304a;color:var(--text)}
+    input[type="color"], input[type="range"]{height:36px}
+    canvas{width:100%;height:560px;border-radius:12px;background:#0e1530;display:block}
+    .wire{display:grid;grid-template-columns:1fr;gap:10px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .box{border:1px dashed #2a355a;border-radius:12px;min-height:56px;display:grid;place-items:center;color:#9aa3b2}
+    @media (max-width: 1024px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="margin:0 0 12px">Prototype / Canvas Editor</h1>
+    <div class="grid">
+      <section class="card">
+        <div class="toolbar">
+          <button class="btn" id="toolPen">✏️ Pena</button>
+          <button class="btn ghost" id="toolRect">▭ Kotak</button>
+          <button class="btn ghost" id="toolErase">🧽 Hapus</button>
+          <input type="color" id="color" value="#7c5cff"/>
+          <label>Ukuran: <input type="range" id="size" min="1" max="40" value="6"/></label>
+          <button class="btn ghost" id="clear">Clear</button>
+          <button class="btn" id="exportPng">Export PNG</button>
+        </div>
+        <canvas id="c" width="1200" height="560"></canvas>
+      </section>
+      <aside class="card">
+        <h3 style="margin:0 0 8px">Wireframe Cepat</h3>
+        <div class="wire">
+          <div class="box">Header / Navbar</div>
+          <div class="row">
+            <div class="box">Hero Text</div>
+            <div class="box">Hero Gambar</div>
+          </div>
+          <div class="row">
+            <div class="box">Card Fitur</div>
+            <div class="box">Card Fitur</div>
+          </div>
+          <div class="box">CTA</div>
+          <div class="box">Footer</div>
+        </div>
+        <p class="muted" style="margin-top:12px">Gunakan panel ini sebagai panduan layout lalu gambar bebas di canvas.</p>
+      </aside>
+    </div>
+  </div>  <script>
+    const c = document.getElementById('c');
+    const ctx = c.getContext('2d');
+    let drawing = false, mode = 'pen';
+
+    function setMode(m){ mode = m; document.getElementById('toolPen').className = m==='pen'?'btn':'btn ghost'; document.getElementById('toolRect').className = m==='rect'?'btn':'btn ghost'; document.getElementById('toolErase').className = m==='erase'?'btn':'btn ghost'; }
+    document.getElementById('toolPen').onclick=()=>setMode('pen');
+    document.getElementById('toolRect').onclick=()=>setMode('rect');
+    document.getElementById('toolErase').onclick=()=>setMode('erase');
+
+    const color = document.getElementById('color');
+    const size = document.getElementById('size');
+
+    // Background grid
+    function drawGrid(){
+      ctx.fillStyle = '#0e1530'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.strokeStyle = '#1a2244'; ctx.lineWidth = 1;
+      for(let x=20;x<c.width;x+=20){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,c.height); ctx.stroke(); }
+      for(let y=20;y<c.height;y+=20){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(c.width,y); ctx.stroke(); }
+    }
+    drawGrid();
+
+    let startX=0,startY=0;
+    c.addEventListener('mousedown', (e)=>{ drawing=true; startX=e.offsetX; startY=e.offsetY; if(mode==='pen'||mode==='erase'){ ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY);} });
+    c.addEventListener('mousemove', (e)=>{
+      if(!drawing) return;
+      if(mode==='pen'){
+        ctx.strokeStyle = color.value; ctx.lineWidth = +size.value; ctx.lineCap='round'; ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke();
+      } else if(mode==='erase'){
+        ctx.strokeStyle = '#0e1530'; ctx.lineWidth = +size.value*2; ctx.lineCap='round'; ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke();
+      } else if(mode==='rect'){
+        // preview rectangle by redrawing grid + temporary rect
+        drawGrid();
+        ctx.strokeStyle = color.value; ctx.lineWidth = 2;
+        const w=e.offsetX-startX, h=e.offsetY-startY;
+        ctx.strokeRect(startX,startY,w,h);
+      }
+    });
+    ['mouseup','mouseleave'].forEach(ev=>c.addEventListener(ev,()=>{drawing=false; drawGrid();}));
+
+    document.getElementById('clear').onclick=()=>{ drawGrid(); };
+    document.getElementById('exportPng').onclick=()=>{
+      const link = document.createElement('a');
+      link.download = 'prototype.png';
+      link.href = c.toDataURL('image/png');
+      link.click();
+    };
+  </script></body>
+</html>
